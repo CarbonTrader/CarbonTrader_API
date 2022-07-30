@@ -1,11 +1,17 @@
-FROM python:3.6.9-alpine
+# 
+FROM python:3.9
+
+# 
 WORKDIR /code
 
-RUN apk --update --upgrade add --no-cache  gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
+# 
+COPY ./requirements.txt /code/requirements.txt
 
-RUN python -m pip install --upgrade pip
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-EXPOSE 7007
-COPY . .
-CMD [ "python", "app.py" ]
+# 
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+# 
+COPY ./app /code/app
+
+# 
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

@@ -1,8 +1,6 @@
-version: "3"
+version: "3.7"
 services:
-  web:
+  api:
     build: .
     ports:
-      - "7007:7007"
-    volumes:
-      - .:/code
+      - 8000:80
