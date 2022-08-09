@@ -59,9 +59,10 @@ class Block:
         new_block = Block(last_block.hash)
         new_block.number_transactions = len(transactions)
         new_block.transactions_hashes = transactions[:]
+        new_block.merkle_root = Block.get_merkle_root(transactions[:])
         new_block.hash = CryptoHash.get_hash(new_block.timestamp, new_block.last_hash, new_block.merkle_root,
                                              new_block.number_transactions, new_block.transactions_hashes)
-        new_block.merkle_root = Block.get_merkle_root(transactions[:])
+
         with open("new_block.json", "w") as outfile:
             outfile.write(json.dumps(new_block.__dict__, sort_keys=True, indent=4, separators=(',', ': ')))
 
