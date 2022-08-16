@@ -1,9 +1,15 @@
-from pydantic import BaseModel
+import time
+import uuid
 from typing import Union
 
-#TODO: Correct attributes
+from pydantic import BaseModel
+
+
 class Transaction(BaseModel):
-    name: str
-    description: Union[str, None] = None
-    price: float
-    tax: Union[float, None] = None
+    id: str = str(uuid.uuid4())[0:8]
+    timestamp: int = time.time_ns()
+    sender_wallet: Union[str, None]
+    recipient: Union[str, None]
+    carbon_trader_serial: Union[str, None]
+    transaction_type: Union[str, None]
+    hash: Union[str, None] = None

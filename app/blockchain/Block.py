@@ -1,7 +1,7 @@
 import json
 import time
 
-from CryptoHash import CryptoHash
+from app.services.CryptoHash import CryptoHash
 
 GENESIS_LAST_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 

@@ -1,5 +1,5 @@
 from fastapi import Depends, FastAPI
-from .routes import CreditProvider, ProjectProvider, UserProvider, TransactionsProvider
+from .routes import CreditProvider, ProjectProvider, UserProvider, TransactionsProvider, Test
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseSettings
 import firebase_admin
@@ -29,4 +29,5 @@ app.include_router(CreditProvider.router)
 app.include_router(ProjectProvider.router)
 app.include_router(UserProvider.router)
 app.include_router(TransactionsProvider.router)
+app.include_router(Test.router)
 

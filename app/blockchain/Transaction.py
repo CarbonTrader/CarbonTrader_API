@@ -1,4 +1,4 @@
-from CryptoHash import CryptoHash
+from app.services.CryptoHash import CryptoHash
 import time
 
 class Transaction:
