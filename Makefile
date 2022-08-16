@@ -11,4 +11,4 @@ clean_app:
 	rm -r app/__pycache__/
 
 serve:
-	uvicorn app.main:app --host 127.0.0.1 --port 8000
+	CREDENTIALS_PATH="app/secrets/credentials.json" uvicorn app.main:app --host 127.0.0.1 --port 8000
