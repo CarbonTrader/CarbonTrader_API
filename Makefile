@@ -11,13 +11,22 @@ $(VENV_NAME)/bin/activate: requirements.txt
 	test -d $(VENV_NAME) || virtualenv -p python3 $(VENV_NAME)
 	${PYTHON} -m pip install -U pip
 	${PYTHON} -m pip install -r requirements.txt
-	touch $(VENV_NAME)/bin/activate
+	sudo touch $(VENV_NAME)/bin/activate
 
 clean_blockchain:
 	rm -r app/blockchain/__pycache__/
 
 clean_app:
 	rm -r app/__pycache__/
+
+clean_services:
+	rm -r app/services/__pycache__/
+
+clean_routes:
+	rm -r app/routes/__pycache__/
+	
+clean_model:
+	rm -r app/Model/__pycache__/
 
 serve: prepare_venv
 	CREDENTIALS_PATH="app/secrets/credentials.json" ${PYTHON} -m  uvicorn app.main:app --host 127.0.0.1 --port 8000
