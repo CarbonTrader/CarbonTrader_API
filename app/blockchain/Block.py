@@ -1,7 +1,8 @@
 import json
 import time
 
-from app.services.CryptoHash import CryptoHash
+from CryptoHash import CryptoHash
+from Wallet import Wallet
 
 GENESIS_LAST_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 
@@ -52,19 +53,19 @@ class Block:
         transactions.append(transactions[-1]) if len(transactions) % 2 != 0 else transactions
 
     @staticmethod
-    def mine_block(last_block, transactions):
+    def mine_block(last_block, transactions_hashes):
         """
         Mine a block based on the given last_block and data.
         """
         new_block = Block(last_block.hash)
-        new_block.number_transactions = len(transactions)
-        new_block.transactions_hashes = transactions[:]
-        new_block.merkle_root = Block.get_merkle_root(transactions[:])
+        new_block.number_transactions = len(transactions_hashes)
+        new_block.transactions_hashes = transactions_hashes[:]
+        new_block.merkle_root = Block.get_merkle_root(transactions_hashes[:])
         new_block.hash = CryptoHash.get_hash(new_block.timestamp, new_block.last_hash, new_block.merkle_root,
                                              new_block.number_transactions, new_block.transactions_hashes)
 
         with open("new_block.json", "w") as outfile:
-            outfile.write(json.dumps(new_block.__dict__, sort_keys=True, indent=4, separators=(',', ': ')))
+            outfile.write(json.dumps(new_block.__dict__, sort_keys=False, indent=4, separators=(',', ': ')))
 
         return new_block
 
@@ -80,24 +81,59 @@ class Block:
         return genesis_block
 
     @staticmethod
-    def is_valid_block(last_block, block):
+    def fetch_new_block():
+        try:
+            with open('new_block.json') as f:
+                block = json.load(f)
+                return block
+        except:
+            print("There was a problem fetching new_block.json")
+            return None
+
+    @staticmethod
+    def is_valid_block(new_block, last_block, transactions, transactions_hashes):
         """
         Validate a block by enforcing the following rules:
         - The block must have the proper last_hash reference
         - The block must meet the consensus algo requirement
         - The block hash must be a vallid convination of the block fields
         """
+        reconstructed_merkle = Block.get_merkle_root(transactions_hashes[:])
+        if reconstructed_merkle != new_block.get("merkle_root"):
+            print('The merkle root is not valid.')
+            return False
 
-        if block.last_hash != last_block.hash:
-            raise Exception('The block last_hash must be correct.')
+        for transaction in transactions:
+            if not Block.is_valid_signature(transaction.get("public_key"), transaction, transaction.get("signature")):
+                print(f'The transaction {transaction.get("id")} is not valid.')
+                return False
 
-        reconstructed_hash = CryptoHash.get_hash(
-            block.timestamp,
-            block.last_hash,
-            block.hash,
-            block.data,
+        if new_block.get("last_hash") != last_block.hash:
+            print('The block last_hash is not valid.')
+            return False
 
-        )
+        reconstructed_hash = CryptoHash.get_hash(new_block.get("timestamp"), new_block.get("last_hash"), new_block.get("merkle_root"),
+                                             new_block.get("number_transactions"), new_block.get("transactions_hashes"))
+        if new_block.get("hash") != reconstructed_hash:
+            print('The block hash is not valid.')
+            return False
+
+        return True
+
+    @staticmethod
+    def is_valid_signature(public_key, transaction,signature):
+        signature = (signature[0],signature[1])
+        del transaction["signature"]
+        wallet = Wallet()
+        wallet.upload_wallet(public_key = public_key)
+        wallet.deserialize_public_key()
+        return Wallet.verify(wallet.public_key,transaction, signature)
+
+
+
+
+
+
 
 
 def main():
