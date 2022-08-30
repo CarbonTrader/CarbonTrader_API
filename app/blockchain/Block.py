@@ -92,28 +92,25 @@ class Block:
 
     @staticmethod
     def is_valid_block(new_block, last_block, transactions, transactions_hashes):
-        """
-        Validate a block by enforcing the following rules:
-        - The block must have the proper last_hash reference
-        - The block must meet the consensus algo requirement
-        - The block hash must be a vallid convination of the block fields
-        """
-        reconstructed_merkle = Block.get_merkle_root(transactions_hashes[:])
-        if reconstructed_merkle != new_block.get("merkle_root"):
-            print('The merkle root is not valid.')
-            return False
 
         for transaction in transactions:
             if not Block.is_valid_signature(transaction.get("public_key"), transaction, transaction.get("signature")):
                 print(f'The transaction {transaction.get("id")} is not valid.')
                 return False
 
+        reconstructed_merkle = Block.get_merkle_root(transactions_hashes[:])
+        if reconstructed_merkle != new_block.get("merkle_root"):
+            print('The merkle root is not valid.')
+            return False
+
         if new_block.get("last_hash") != last_block.hash:
             print('The block last_hash is not valid.')
             return False
 
-        reconstructed_hash = CryptoHash.get_hash(new_block.get("timestamp"), new_block.get("last_hash"), new_block.get("merkle_root"),
-                                             new_block.get("number_transactions"), new_block.get("transactions_hashes"))
+        reconstructed_hash = CryptoHash.get_hash(new_block.get("timestamp"), new_block.get("last_hash"),
+                                                 new_block.get("merkle_root"),
+                                                 new_block.get("number_transactions"),
+                                                 new_block.get("transactions_hashes"))
         if new_block.get("hash") != reconstructed_hash:
             print('The block hash is not valid.')
             return False
@@ -121,19 +118,13 @@ class Block:
         return True
 
     @staticmethod
-    def is_valid_signature(public_key, transaction,signature):
-        signature = (signature[0],signature[1])
+    def is_valid_signature(public_key, transaction, signature):
+        signature = (signature[0], signature[1])
         del transaction["signature"]
         wallet = Wallet()
-        wallet.upload_wallet(public_key = public_key)
+        wallet.upload_wallet(public_key=public_key)
         wallet.deserialize_public_key()
-        return Wallet.verify(wallet.public_key,transaction, signature)
-
-
-
-
-
-
+        return Wallet.verify(wallet.public_key, transaction, signature)
 
 
 def main():
