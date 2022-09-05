@@ -1,7 +1,10 @@
 from Block import Block
 from Transaction import Transaction
-
+from types import SimpleNamespace
 import json
+
+from Wallet import Wallet
+
 
 class Blockchain:
     """
@@ -12,47 +15,86 @@ class Blockchain:
     def __init__(self):
         self.chain = [Block.genesis()]
 
-    def add_block(self, transactions):
-        self.chain.append(Block.mine_block(self.chain[-1], transactions))
+    def create_not_verify_block(self, transactions):
+        return Block.mine_block(self.chain[-1], transactions)
+    def add_block(self, new_block):
+        self.chain.append(new_block)
 
     def __repr__(self):
         return f'Blockchain: {self.chain}'
 
-    @staticmethod
-    def update_chain_file(chain):
+    def update_chain_file(self):
         with open("blockchain.json", "w") as outfile:
-            outfile.write(json.dumps([block.__dict__ for block in chain], sort_keys=True, indent=4, separators=(',', ': ')))
+            outfile.write(json.dumps([block.__dict__ for block in self.chain], sort_keys=False, indent=4, separators=(',', ': ')))
+
+    @staticmethod
+    def update_local_transactions(new_transaction):
+        transactions = []
+        try:
+            with open('local_transactions.json') as f:
+                transactions = json.load(f)
+        except:
+            print("There was a problem fetching local_transactions.json")
+
+        transactions.append(new_transaction.__dict__)
+        try:
+            with open("local_transactions.json", "w") as outfile:
+                outfile.write(
+                    json.dumps([transaction for transaction in transactions], sort_keys=False, indent=4, separators=(',', ': ')))
+        except Exception as e:
+            print(e)
+            print("There was a problem writting local_transactions.json")
+
+    @staticmethod
+    def reset_local_transactions():
+        transactions = []
+        try:
+            with open("local_transactions.json", "w") as outfile:
+                outfile.write(
+                    json.dumps([transaction for transaction in transactions], sort_keys=False, indent=4,
+                               separators=(',', ': ')))
+        except Exception as e:
+            print(e)
+            print("There was a problem writting local_transactions.json")
 
 
+    @staticmethod
+    def fetch_transactions():
+        try:
+            with open('local_transactions.json') as f:
+                transactions = json.load(f)
+                return transactions
+        except:
+            print("There was a problem fetching local_transactions.json")
+            return None
+
+    @staticmethod
+    def obtain_transactions_hashes(transactions):
+        return [transaction.get("hash") for transaction in transactions]
 def main():
+    Blockchain.reset_local_transactions()
     blockchain = Blockchain()
-    transaction1 = Transaction("1","commerce","123456","user1","user2")
-    transaction2 = Transaction("2","commerce","123456","user2","user1")
-    transaction3 = Transaction("3","retire","123456","user2","anon")
-    transaction4 = Transaction("4","retire","123456","user1","anon")
-    transaction5 = Transaction("5","retire","1234567","user3","anon")
+    wallet_1 = Wallet()
+    wallet_2 = Wallet()
+    trans = Transaction("id","type","serial",wallet_1,"recipient")
+    trans2 = Transaction("id2","type","serial",wallet_2,"recipient")
+    trans3 = Transaction("id3","type","serial",wallet_1,"recipient")
+    trans4 = Transaction("id4","type","serial",wallet_2,"recipient")
+    trans5 = Transaction("id5","type","serial",wallet_2,"recipient")
+    Blockchain.update_local_transactions(trans)
+    Blockchain.update_local_transactions(trans2)
+    Blockchain.update_local_transactions(trans3)
+    Blockchain.update_local_transactions(trans4)
+    Blockchain.update_local_transactions(trans5)
+    transactions = Blockchain.fetch_transactions()
+    transactions_hashes = Blockchain.obtain_transactions_hashes(transactions)
+    new_block = blockchain.create_not_verify_block(transactions_hashes)
+    block_from_file = Block.fetch_new_block()
+    if Block.is_valid_block(block_from_file,blockchain.chain[-1],transactions, transactions_hashes):
+        print("Block is valid")
+        blockchain.add_block(new_block)
+    blockchain.update_chain_file()
 
-    blockchain.add_block([transaction1.generate_hash(),transaction2.generate_hash(),transaction5.generate_hash()])
-    blockchain.add_block([transaction3.generate_hash(), transaction4.generate_hash()])
-    blockchain.update_chain_file(blockchain.chain)
-    transactions = []
-    while True:
-        res = input("Welcome, wold you like to make a transaction? (y/n): ")
-        print(res)
-        if res != 'y':
-            exit()
-        _id = input("Transaction id: ")
-        buyer = input("Buyer: ")
-        seller = input("Seller: ")
-        carbon_trader_serial = input("Carbon_trader_serial: ")
-        transaction_type = input("Transaction_type: ")
-        transaction = Transaction(id,transaction_type,carbon_trader_serial,buyer,seller)
-        transactions.append(transaction)
-        if len(transactions) == 2:
-            print("Block closed!")
-            blockchain.add_block([trans.generate_hash() for trans in transactions])
-            blockchain.update_chain_file(blockchain.chain)
-            transactions = []
 
 if __name__ == '__main__':
     main()
