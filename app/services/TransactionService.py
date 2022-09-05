@@ -1,5 +1,5 @@
 from app.Model.Transaction import Transaction
-from app.services.CryptoHash import CryptoHash
+from app.blockchain.CryptoHash import CryptoHash
 
 
 class TransactionService:

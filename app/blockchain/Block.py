@@ -3,6 +3,7 @@ import time
 
 from CryptoHash import CryptoHash
 from Wallet import Wallet
+from Merkle import Merkle
 
 GENESIS_LAST_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 
@@ -33,24 +34,6 @@ class Block:
             f'transactions: {self.transactions_hashes})'
         )
 
-    @staticmethod
-    def get_merkle_root(transactions):
-        aux = []
-        Block.complete_list(transactions)
-        while len(transactions) != 0:
-            first, second = transactions[0], transactions[1]
-            transactions = transactions[2:]
-            aux.append(CryptoHash.get_hash(first, second))
-            if len(transactions) == 0 and len(aux) > 1:
-                transactions = aux[:]
-                aux = []
-                Block.complete_list(transactions)
-
-        return aux[0]
-
-    @staticmethod
-    def complete_list(transactions):
-        transactions.append(transactions[-1]) if len(transactions) % 2 != 0 else transactions
 
     @staticmethod
     def mine_block(last_block, transactions_hashes):
@@ -60,7 +43,7 @@ class Block:
         new_block = Block(last_block.hash)
         new_block.number_transactions = len(transactions_hashes)
         new_block.transactions_hashes = transactions_hashes[:]
-        new_block.merkle_root = Block.get_merkle_root(transactions_hashes[:])
+        new_block.merkle_root = Merkle.merkle_root(transactions_hashes[:])
         new_block.hash = CryptoHash.get_hash(new_block.timestamp, new_block.last_hash, new_block.merkle_root,
                                              new_block.number_transactions, new_block.transactions_hashes)
 
@@ -98,7 +81,7 @@ class Block:
                 print(f'The transaction {transaction.get("id")} is not valid.')
                 return False
 
-        reconstructed_merkle = Block.get_merkle_root(transactions_hashes[:])
+        reconstructed_merkle = Merkle.merkle_root(transactions_hashes[:])
         if reconstructed_merkle != new_block.get("merkle_root"):
             print('The merkle root is not valid.')
             return False

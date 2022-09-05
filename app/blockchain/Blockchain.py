@@ -87,9 +87,7 @@ def main():
     Blockchain.update_local_transactions(trans4)
     Blockchain.update_local_transactions(trans5)
     transactions = Blockchain.fetch_transactions()
-    print(len(transactions))
     transactions_hashes = Blockchain.obtain_transactions_hashes(transactions)
-    print(transactions_hashes)
     new_block = blockchain.create_not_verify_block(transactions_hashes)
     block_from_file = Block.fetch_new_block()
     if Block.is_valid_block(block_from_file,blockchain.chain[-1],transactions, transactions_hashes):

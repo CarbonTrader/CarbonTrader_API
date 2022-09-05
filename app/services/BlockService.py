@@ -1,5 +1,5 @@
 from app.Model.Block import Block
-from app.services.CryptoHash import CryptoHash
+from app.blockchain.CryptoHash import CryptoHash
 import json
 
 GENESIS_LAST_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
