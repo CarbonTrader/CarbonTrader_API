@@ -1,7 +1,8 @@
 import time
 
-from CryptoHash import CryptoHash
-from Wallet import Wallet
+
+from app.blockchain.Wallet import Wallet
+from app.blockchain.CryptoHash import CryptoHash
 
 
 class Transaction:
@@ -23,13 +24,12 @@ class Transaction:
                                    self.transaction_type, self.public_key)
 
 
-
-
 def main():
     wallet = Wallet()
     print(wallet.__dict__)
     trans = Transaction("id", "type", "serial", wallet, "recipient")
     print(trans.__dict__)
+
 
 if __name__ == '__main__':
     main()

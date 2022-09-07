@@ -1,32 +1,54 @@
 from app.Model.Blockchain import Blockchain
 import json
+import os
+import logging
+import threading
+from concurrent import futures
+from google.auth import jwt
+from google.cloud import pubsub_v1
+import os
+from pydantic import BaseSettings
 
-from .BlockService import BlockService
+from app.blockchain.Transaction import Transaction
 
 
-class BlockchainService:
-    @staticmethod
-    def add_block(blockchain: Blockchain, transactions):
-        blockchain.chain.append(BlockService.mine_block(
-            blockchain.chain[-1], transactions))
+project_id = 'flash-ward-360216'
+api_topic_id = 'vocero'
+node_topic_subscription_id = 'nodes_info-sub'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "app/secrets/service-account-info.json"
+# TODO: Change node list
+nodes_list = ['node1', 'node2', 'node3']
 
-    @staticmethod
-    def update_chain_file(chain):
-        with open("blockchain.json", "w") as outfile:
-            outfile.write(json.dumps(
-                [block.__dict__ for block in chain], sort_keys=True, indent=4, separators=(',', ': ')))
+# Se inicializa el publisher
+publisher = pubsub_v1.PublisherClient()
+api_topic_path = publisher.topic_path(project_id, api_topic_id)
 
-    @staticmethod
-    def test():
-        blockchain = Blockchain()
-        """transaction1 = Transaction("1", "commerce", "123456", "user1", "user2")
-        transaction2 = Transaction("2", "commerce", "123456", "user2", "user1")
-        transaction3 = Transaction("3", "retire", "123456", "user2", "anon")
-        transaction4 = Transaction("4", "retire", "123456", "user1", "anon")
-        transaction5 = Transaction("5", "retire", "1234567", "user3", "anon")
 
-        blockchain.add_block([transaction1.generate_hash(
-        ), transaction2.generate_hash(), transaction5.generate_hash()])
-        blockchain.add_block(
-            [transaction3.generate_hash(), transaction4.generate_hash()])
-        blockchain.update_chain_file(blockchain.chain)"""
+def get_callback(future, message):
+    def callback(future):
+        try:
+            logging.info("Published message %s.", future.result(timeout=1))
+        except futures.TimeoutError as exc:
+            print("Publishing %s timeout: %r", message, exc)
+
+    return callback
+
+
+def main(transaction: Transaction):
+
+    publish_futures = []
+    data = {
+        "type": 'api_message',
+        "transactions": transaction,
+        "idTransaction": transaction["id"],
+    }
+
+    message = json.dumps(data, ensure_ascii=False).encode('utf8')
+
+    future1 = publisher.publish(api_topic_path, message)
+    future1.add_done_callback(get_callback(future1, message))
+    publish_futures.append(future1)
+
+    futures.wait(publish_futures, return_when=futures.ALL_COMPLETED)
+
+    return transaction
