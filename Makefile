@@ -29,5 +29,5 @@ clean_model:
 	rm -r app/Model/__pycache__/
 
 serve: prepare_venv
-	CREDENTIALS_PATH="app/secrets/credentials.json" ${PYTHON} -m  uvicorn app.main:app --host 127.0.0.1 --port 8000
+	${PYTHON} -m  uvicorn app.main:app --host 0.0.0.0 --port 8000
 
