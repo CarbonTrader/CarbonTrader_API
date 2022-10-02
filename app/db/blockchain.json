@@ -1,0 +1,10 @@
+[
+    {
+        "timestamp": 1663608898836871600,
+        "last_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "hash": "a571e724db5acd737c9e45f798dae743aed2d55484567f1d307521673c5b39ee",
+        "merkle_root": null,
+        "number_transactions": 0,
+        "transactions_hashes": []
+    }
+]

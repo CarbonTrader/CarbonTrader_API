@@ -6,7 +6,7 @@ import firebase_admin
 
 
 class Settings(BaseSettings):
-    CREDENTIALS_PATH: str
+    CREDENTIALS_PATH= "app/secrets/credentials.json"
     DB_URL = "https://carbontrader-1111-default-rtdb.firebaseio.com/"
 
 
