@@ -3,7 +3,7 @@ from app.blockchain.Transaction import Transaction
 from app.blockchain.Wallet import Wallet
 import json
 from app.services.BlockchainService import main
-
+from typing import Union, List
 
 router = APIRouter(
     prefix="/blockchain",
@@ -48,3 +48,26 @@ async def get_user_credits(transaction_data: dict = Body(...)):
     trans = Transaction(transaction_data.get("id"), transaction_data.get("type"),
                         transaction_data.get("serial"), wallet, transaction_data.get("recipient"))
     return main(trans.__dict__)
+
+
+@router.post("/backup")
+async def update_backup(blockchain: List[dict] = Body(...)):
+    print(blockchain)
+    try:
+        with open("app/db/blockchain.json", 'w') as fp:
+            json.dump(blockchain, fp, sort_keys=False,
+                      indent=4, separators=(',', ': '))
+    except:
+        print("There was a problem writing the json file")
+    return blockchain
+
+
+@router.get("/backup")
+async def get_backup():
+    try:
+        with open("app/db/blockchain.json") as json_file:
+            data = json.load(json_file)
+            return data
+    except:
+        print("There was a problem fetching the json file")
+        return None
