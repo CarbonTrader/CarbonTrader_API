@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from firebase_admin import db
-from app.services.ProjectService import ProjectService
-from app.Model.Project import Project
 from app.services.RecoveryService import RecoveryService
+from fastapi import APIRouter, Body
+from typing import List
 
 router = APIRouter(
     prefix="/recovery",
@@ -15,9 +14,9 @@ DUMMY_RESPONSE = {"test": "test"}
 
 @router.get("/")
 async def get_backup_blockchain():
-    return RecoveryService.get_blockchina()
+    return RecoveryService.get_blockchain()
 
 
 @router.put("/")
-async def update_backup_blockchain():
-    return DUMMY_RESPONSE
+async def update_backup_blockchain(transaction_data: List[dict] = Body(...)):
+    return RecoveryService.update_blockchain(transaction_data)

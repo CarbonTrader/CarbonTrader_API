@@ -1,21 +1,11 @@
 from fastapi import Depends, FastAPI
+from firebase_admin import firestore
+from app.routes import RecoveryProvider
 from .routes import BlockchainProvider, CreditProvider, ProjectProvider, UserProvider, TransactionsProvider, Test
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseSettings
-import firebase_admin
 
 
-class Settings(BaseSettings):
-    CREDENTIALS_PATH= "app/secrets/credentials.json"
-    DB_URL = "https://carbontrader-1111-default-rtdb.firebaseio.com/"
-
-
-settings = Settings()
-
-cred_obj = firebase_admin.credentials.Certificate(settings.CREDENTIALS_PATH)
-default_app = firebase_admin.initialize_app(cred_obj, {
-    'databaseURL': settings.DB_URL
-})
 app = FastAPI()
 
 app.add_middleware(
@@ -31,4 +21,5 @@ app.include_router(ProjectProvider.router)
 app.include_router(UserProvider.router)
 app.include_router(TransactionsProvider.router)
 app.include_router(BlockchainProvider.router)
+app.include_router(RecoveryProvider.router)
 app.include_router(Test.router)
