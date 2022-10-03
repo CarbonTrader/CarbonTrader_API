@@ -1,5 +1,6 @@
 from re import I
 from app.config.firebaseConfig import db
+import time
 
 
 class RecoveryService:
@@ -16,6 +17,10 @@ class RecoveryService:
 
     @staticmethod
     def update_blockchain(blockchain):
+        docs = db.collection(u'Blockchain').stream()
+        for doc in docs:
+            doc.reference.delete()
+
         name = "node0"
         for i in range(len(blockchain)):
             name = name[:-1] + str(i)
