@@ -27,8 +27,6 @@ api_topic_id = 'vocero'
 node_topic_subscription_id = 'nodes_info-sub'
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "app/secrets/service-account-info.json"
 # TODO: Change node list
-nodes_list = ['node1', 'node2', 'node3']
-test_k = "-----BEGIN PRIVATE KEY-----\nMIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgyRdwdavTbmfBldZgylzU\nXyYxX5WPe+WAHmQaDkrXiOmhRANCAARawkffg+hxUcor68JsWX7/lW0YNs+rbp3b\nrE9TolBzgi77cVklf6qmTRwKeXUUqSU9FnnMm5mQiurtCimbzu50\n-----END PRIVATE KEY-----\n"
 # Se inicializa el publisher
 publisher = pubsub_v1.PublisherClient()
 api_topic_path = publisher.topic_path(project_id, api_topic_id)
@@ -52,20 +50,19 @@ class TransactionService:
             transaction_data["recipient_email"])
         sender_response = UserService.get_user(
             transaction_data["sender_email"])
-
         wallet = Wallet()
         wallet.upload_wallet(transaction_data["sender_email"], transaction_data["private_key_sender"],
                              transaction_data["public_key_sender"], [])
 
-        trans = Transaction(str(uuid.uuid4()), "exchange",  transaction_data.get(
+        trans = Transaction(str(uuid.uuid4()), transaction_data["type"],  transaction_data.get(
             "carbon_trader_serial"), wallet, transaction_data.get("recipient_email"))
 
         TransactionService.transfer_credits(recipient_response, sender_response, transaction_data.get(
-            "carbon_trader_serial"))
+            "carbon_trader_serial"),  transaction_data["type"])
         return TransactionService.create_transaction(trans.__dict__)
 
     @staticmethod
-    def transfer_credits(recipient_response, sender_response, serial):
+    def transfer_credits(recipient_response, sender_response, serial, type):
         recipient = recipient_response["response"]
         sender = sender_response["response"]
         recipient_credits = recipient.get("wallet").get("owned_credits")
@@ -94,4 +91,11 @@ class TransactionService:
 
         futures.wait(publish_futures, return_when=futures.ALL_COMPLETED)
 
+        sig = []
+        sig.append(str(transaction["signature"][0]))
+        sig.append(str(transaction["signature"][1]))
+        transaction["signature"] = sig
+
+        db.collection(u"Transaction").document(
+            transaction["hash"]).set(transaction)
         return transaction

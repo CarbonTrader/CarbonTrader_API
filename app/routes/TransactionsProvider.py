@@ -41,14 +41,17 @@ transaction_data = {
 """
 
 
-@router.post("/retire")
-async def burn_credit(transaction_data: dict = Body(...)):
-    pass
-
-
 @router.post("/exchange")
 async def exchange_credit(transaction_data: dict = Body(...)):
     transaction_data["type"] = "exchange"
+    return TransactionService.build_transaction(transaction_data)
+
+
+@router.post("/retire")
+async def retire_credit(transaction_data: dict = Body(...)):
+    transaction_data["type"] = "retire"
+    transaction_data["recipient_email"] = "anonimo@gmail.com"
+    print(transaction_data)
     return TransactionService.build_transaction(transaction_data)
 
 
