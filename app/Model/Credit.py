@@ -1,13 +1,12 @@
-from pydantic import BaseModel
 from typing import Union
 
-#TODO: Correct credits attributes
+from pydantic import BaseModel
+
+
+# TODO: Correct credits attributes
 class Credit(BaseModel):
-    name: str
-    description: Union[str, None] = None
-    price: float
-    tax: Union[float, None] = None
-
-
-
-
+    carbontrader_serial: Union[str, None]
+    credit_provider_serial: str
+    project_id: str
+    price: int
+    retire_date: int

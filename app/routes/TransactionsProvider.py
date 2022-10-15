@@ -1,4 +1,5 @@
-
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from app.Model.Transaction import Transaction
 from fastapi import FastAPI, APIRouter, Body
 from app.blockchain.Transaction import Transaction
@@ -13,22 +14,16 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-DUMMY_RESPONSE = {"test": "test"}
 
-
-@router.get("/")
-async def get_global_transactions(trans_id):
-    return DUMMY_RESPONSE
-
-
-@router.get("/{trans_id}")
-async def get_transaction(trans_id):
-    return DUMMY_RESPONSE
-
-
-@router.get("/{user_id}")
-async def get_user_transactions(user_id):
-    return DUMMY_RESPONSE
+@router.get("/all")
+async def get_all():
+    try:
+        response = TransactionService.get_all_transactions()
+        if isinstance(response, Exception):
+            return HTTPException(detail={'error': str(response)}, status_code=404)
+        return JSONResponse(content=response, status_code=200)
+    except Exception as e:
+        return HTTPException(detail={'error': str(e)}, status_code=500)
 
 """
 transaction_data = {
@@ -46,12 +41,19 @@ async def exchange_credit(transaction_data: dict = Body(...)):
     transaction_data["type"] = "exchange"
     return TransactionService.build_transaction(transaction_data)
 
+@router.post("/many/exchange")
+async def exchange_many_credits(transaction_data:dict = Body(...)):
+    print("entra")
+    print(transaction_data)
+    #transaction_data["type"] = "exchange"
+    return True
+#TransactionService.build_transaction(transaction_data)
+
 
 @router.post("/retire")
 async def retire_credit(transaction_data: dict = Body(...)):
     transaction_data["type"] = "retire"
     transaction_data["recipient_email"] = "anonimo@gmail.com"
-    print(transaction_data)
     return TransactionService.build_transaction(transaction_data)
 
 
@@ -60,4 +62,4 @@ async def create_transaction(transaction_data: dict = Body(...)):
     wallet = Wallet()
     trans = Transaction(transaction_data.get("id"), transaction_data.get("type"),
                         transaction_data.get("serial"), wallet, transaction_data.get("recipient"))
-    return TransactionService.create_transaction(trans.__dict__)
+    return TransactionService.upload_transaction_to_blockchain(trans.__dict__)

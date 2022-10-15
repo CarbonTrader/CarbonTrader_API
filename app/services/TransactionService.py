@@ -42,10 +42,16 @@ def get_callback(future, message):
     return callback
 
 
+def format_key(key: str):
+    return key.replace("\\n", "\n")
+
+
 class TransactionService:
 
     @staticmethod
     def build_transaction(transaction_data):
+        transaction_data['public_key_sender'] = format_key(transaction_data['public_key_sender'])
+        transaction_data['private_key_sender'] = format_key(transaction_data['private_key_sender'])
         recipient_response = UserService.get_user(
             transaction_data["recipient_email"])
         sender_response = UserService.get_user(
@@ -54,28 +60,54 @@ class TransactionService:
         wallet.upload_wallet(transaction_data["sender_email"], transaction_data["private_key_sender"],
                              transaction_data["public_key_sender"], [])
 
-        trans = Transaction(str(uuid.uuid4()), transaction_data["type"],  transaction_data.get(
+        trans = Transaction(str(uuid.uuid4()), transaction_data["type"], transaction_data.get(
             "carbon_trader_serial"), wallet, transaction_data.get("recipient_email"))
 
         TransactionService.transfer_credits(recipient_response, sender_response, transaction_data.get(
-            "carbon_trader_serial"),  transaction_data["type"])
-        return TransactionService.create_transaction(trans.__dict__)
+            "carbon_trader_serial"), trans.__dict__)
+        return TransactionService.upload_transaction_to_blockchain(trans.__dict__)
 
     @staticmethod
-    def transfer_credits(recipient_response, sender_response, serial, type):
+    def transfer_credits(recipient_response, sender_response, serial, trans):
         recipient = recipient_response["response"]
         sender = sender_response["response"]
         recipient_credits = recipient.get("wallet").get("owned_credits")
         sender_credits = sender.get("wallet").get("owned_credits")
         sender_credits.remove(serial)
         recipient_credits.append(serial)
+        sig = []
+        sig.append(str(trans["signature"][0]))
+        sig.append(str(trans["signature"][1]))
+        trans["signature"] = sig
+
+        db.collection(recipient_response["collection"]).document(recipient['email']).collection(
+            'Transactions').document(
+            trans['hash']).set(trans)
+        db.collection(sender_response["collection"]).document(sender['email']).collection('Transactions').document(
+            trans['hash']).set(trans)
+
+        db.collection(u"Transaction").document(
+            trans["hash"]).set(trans)
         db.collection(recipient_response["collection"]).document(
             recipient.get("email")).set(recipient)
         db.collection(sender_response["collection"]).document(
             sender.get("email")).set(sender)
+        signature_aux = (int(trans["signature"][0]), int(trans["signature"][1]))
+        trans["signature"] = signature_aux
+        db.collection("Seriales_En_Venta").document(trans['carbon_trader_serial']).delete()
+
 
     @staticmethod
-    def create_transaction(transaction: Transaction):
+    def get_all_transactions():
+        result_transactions = []
+        trans = db.collection('Transaction').stream()
+        for transaction in trans:
+            transaction = transaction.to_dict()
+            result_transactions.append(transaction)
+        return result_transactions
+
+    @staticmethod
+    def upload_transaction_to_blockchain(transaction: Transaction):
         publish_futures = []
         data = {
             "type": 'api_message',
@@ -91,11 +123,4 @@ class TransactionService:
 
         futures.wait(publish_futures, return_when=futures.ALL_COMPLETED)
 
-        sig = []
-        sig.append(str(transaction["signature"][0]))
-        sig.append(str(transaction["signature"][1]))
-        transaction["signature"] = sig
-
-        db.collection(u"Transaction").document(
-            transaction["hash"]).set(transaction)
         return transaction
