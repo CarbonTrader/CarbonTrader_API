@@ -35,11 +35,11 @@ class UserService:
         trader_credits = user['wallet']['owned_credits']
         for aux in trader_credits:
             user_credits.append(aux)
-     #   onSale_credits = db.collection('Seriales_En_Venta').stream()
-     #   for c in onSale_credits:
-     #       c = c.to_dict()
-     #       if c['owner'] == user_email:
-     #           user_credits.append(c['serial'])
+        #   onSale_credits = db.collection('Seriales_En_Venta').stream()
+        #   for c in onSale_credits:
+        #       c = c.to_dict()
+        #       if c['owner'] == user_email:
+        #           user_credits.append(c['serial'])
 
         return user_credits
 
@@ -58,7 +58,6 @@ class UserService:
 
     @staticmethod
     def sale_credit(user_email, serial, project_id):
-        print("Entra------")
         user = db.collection('Trader').document(user_email).get()
         if not user.exists:
             raise Exception('Not found trader')
@@ -99,3 +98,15 @@ class UserService:
             obj['pub_key'] = user['wallet']['public_key']
             obj['priv_key'] = user['wallet']['private_key']
             return obj
+
+    @staticmethod
+    def update_user(new_user):
+        found_user = db.collection('Trader').document(new_user['email']).get()
+        if not found_user.exists:
+            raise Exception('Not found user')
+
+        found_user = found_user.to_dict()
+
+        found_user['name'] = new_user['name']
+        db.collection('Trader').document(found_user['email']).set(found_user)
+        return found_user

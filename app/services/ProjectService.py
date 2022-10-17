@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from app.Model.Project import Project
@@ -33,6 +35,7 @@ class ProjectService:
     def create_project(auth_token: str, new_project: Project, email: str):
         user = db.collection('CreditProvider').document(email).get()
         project = new_project.dict()
+        project['creation_date'] = time.time_ns()
         if not user.exists:
             raise Exception('Not found user')
 
@@ -71,21 +74,21 @@ class ProjectService:
                     for credit in credits:
                         if credit['carbontrader_serial'] in wallet_credits:
                             result_credits.append(credit)
-        object = {
+        object_element = {
             "serial": "",
             "project_id": "",
             "owner": "",
             "retire_date": "",
             "price": ""
         }
-        onSale_credits = db.collection("Seriales_En_Venta").stream()
-        for c in onSale_credits:
+        on_sale_credits = db.collection("Seriales_En_Venta").stream()
+        for c in on_sale_credits:
             c = c.to_dict()
-            if (c['project_id'] == project_id):
-                object['serial'] = c['serial']
-                object['project_id'] = c['project_id']
-                object['owner']= c['owner']
-                result_credits.append(object)
+            if c['project_id'] == project_id:
+                object_element['serial'] = c['serial']
+                object_element['project_id'] = c['project_id']
+                object_element['owner'] = c['owner']
+                result_credits.append(object_element)
         return result_credits
 
     @staticmethod

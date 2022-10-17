@@ -9,4 +9,4 @@ class Credit(BaseModel):
     credit_provider_serial: str
     project_id: str
     price: int
-    retire_date: int
+    retire_date: Union[int, None]

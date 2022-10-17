@@ -1,16 +1,17 @@
-from app.Model.Transaction import Transaction
 import json
-import os
 import logging
-from concurrent import futures
-from google.cloud import pubsub_v1
 import os
+import time
+import uuid
+from concurrent import futures
+
+from google.cloud import pubsub_v1
+
+from app.Model.Transaction import Transaction
+from app.blockchain.Transaction import Transaction
 from app.blockchain.Wallet import Wallet
 from app.config.firebaseConfig import db
-import uuid
-from app.blockchain.Transaction import Transaction
 from app.services.UserService import UserService
-import json
 
 """
 {
@@ -44,6 +45,24 @@ def get_callback(future, message):
 
 def format_key(key: str):
     return key.replace("\\n", "\n")
+
+
+def update_retire_date(transaction_type, serial, recipient_email, sender_email):
+    print("entra")
+    print(sender_email)
+    found_cp = db.collection('CreditProvider').document(sender_email).get()
+
+    if found_cp.exists:
+        cp_projects = db.collection('CreditProvider').document(sender_email).collection('GreenProjects').stream()
+        for project in cp_projects:
+            project = project.to_dict()
+            project_credits = project['credits']
+            for credit in project_credits:
+                if credit['carbontrader_serial'] == serial:
+                    credit['retire_date'] = time.time_ns()
+                    project['credits'] = project_credits
+                    db.collection('CreditProvider').document(sender_email).collection('GreenProjects').document(
+                        project['id']).set(project)
 
 
 class TransactionService:
@@ -95,7 +114,7 @@ class TransactionService:
         signature_aux = (int(trans["signature"][0]), int(trans["signature"][1]))
         trans["signature"] = signature_aux
         db.collection("Seriales_En_Venta").document(trans['carbon_trader_serial']).delete()
-
+        update_retire_date(trans['transaction_type'], trans['carbon_trader_serial'], recipient['email'], sender['email'])
 
     @staticmethod
     def get_all_transactions():
@@ -124,3 +143,27 @@ class TransactionService:
         futures.wait(publish_futures, return_when=futures.ALL_COMPLETED)
 
         return transaction
+
+    @staticmethod
+    def multi_exchange(request):
+        print(request)
+        found_cp = db.collection('CreditProvider').document(request['cp_email']).get()
+        if not found_cp.exists:
+            raise Exception('Not found Credit Provider')
+
+        found_cp = found_cp.to_dict()
+
+        cp_credits = found_cp['wallet']['owned_credits']
+        selected_cp_credits = cp_credits[:request['amount']]
+
+        for credit in selected_cp_credits:
+            transaction = {
+                'carbon_trader_serial': credit,
+                'recipient_email': request['recipient_email'],
+                'sender_email': request['cp_email'],
+                'private_key_sender': request['private_key_sender'],
+                'public_key_sender': request['public_key_sender'],
+                'type': 'exchange'
+            }
+
+            TransactionService.build_transaction(transaction)

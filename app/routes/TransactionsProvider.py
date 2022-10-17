@@ -1,11 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+
 from app.Model.Transaction import Transaction
-from fastapi import FastAPI, APIRouter, Body
 from app.blockchain.Transaction import Transaction
 from app.blockchain.Wallet import Wallet
-from typing import Union, List
-import uuid
 from app.services.TransactionService import TransactionService
 
 router = APIRouter(
@@ -25,6 +24,7 @@ async def get_all():
     except Exception as e:
         return HTTPException(detail={'error': str(e)}, status_code=500)
 
+
 """
 transaction_data = {
     "carbon_trader_serial":"carbon-trader-09-302-00",
@@ -41,13 +41,19 @@ async def exchange_credit(transaction_data: dict = Body(...)):
     transaction_data["type"] = "exchange"
     return TransactionService.build_transaction(transaction_data)
 
+
 @router.post("/many/exchange")
-async def exchange_many_credits(transaction_data:dict = Body(...)):
-    print("entra")
-    print(transaction_data)
-    #transaction_data["type"] = "exchange"
-    return True
-#TransactionService.build_transaction(transaction_data)
+async def exchange_many_credits(transaction_data: dict = Body(...)):
+    try:
+        response = TransactionService.multi_exchange(transaction_data)
+        if isinstance(response, Exception):
+            return HTTPException(detail={'error': str(response)}, status_code=404)
+        return JSONResponse(content='Successful transactions', status_code=200)
+    except Exception as e:
+        return HTTPException(detail={'error': str(e)}, status_code=500)
+
+
+# TransactionService.build_transaction(transaction_data)
 
 
 @router.post("/retire")

@@ -73,7 +73,13 @@ async def get_transactions(transaction_data: dict = Body(...)):
 
 @router.put("/")
 async def update_user_info(user: User):
-    return DUMMY_RESPONSE
+    try:
+        response = UserService.update_user(user)
+        if isinstance(response, Exception):
+            return HTTPException(detail={'error': str(response)}, status_code=404)
+        return JSONResponse(content=response, status_code=200)
+    except Exception as e:
+        return HTTPException(detail={'error': str(e)}, status_code=500)
 
 
 @router.delete("/{user_id}")

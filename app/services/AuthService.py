@@ -85,7 +85,7 @@ class AuthService:
         password = req_json['password']
         try:
             user = pb.auth().sign_in_with_email_and_password(email, password)
-            response = get_user(email)
+            response = AuthService.get_user(email)
 
             if not response:
                 raise Exception('Not found user')
@@ -95,3 +95,17 @@ class AuthService:
             return response
         except Exception as e:
             return e
+
+    @staticmethod
+    async def remove_trader_account(email: str):
+        found_trader = db.collection('Trader').document(email).get()
+
+        if not found_trader.exists:
+            raise Exception('Trader not found')
+
+        db.collection('Trader').document(email).delete()
+        user = auth.get_user_by_email(email)
+        user_uid = user.uid
+
+        auth.delete_user(user_uid)
+
