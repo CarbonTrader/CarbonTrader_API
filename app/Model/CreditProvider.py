@@ -3,7 +3,8 @@ from app.Model.Project import Project
 from typing import Union
 from typing import List, Optional
 
-#TODO: Correct attributes
+
+# TODO: Correct attributes
 class CreditProvider(BaseModel):
     name: str
     description: str
