@@ -1,10 +1,9 @@
 from fastapi import Depends, FastAPI
 from firebase_admin import firestore
 from app.routes import RecoveryProvider
-from .routes import BlockchainProvider, CreditProvider, ProjectProvider, UserProvider, TransactionsProvider, Test,AuthProvider
+from .routes import BlockchainProvider, CreditProvider, ProjectProvider, UserProvider, TransactionsProvider, AuditProviders, AuthProvider
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseSettings
-
 
 app = FastAPI()
 
@@ -23,4 +22,4 @@ app.include_router(UserProvider.router)
 app.include_router(TransactionsProvider.router)
 app.include_router(BlockchainProvider.router)
 app.include_router(RecoveryProvider.router)
-app.include_router(Test.router)
+app.include_router(AuditProviders.router)
