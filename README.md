@@ -34,7 +34,7 @@ For deploying you first must login to heroku using the command
 then you need to login to your docker account with the command
 - `heroku container:login`<br />
 then you need to build the project image using the command
-- `docker-compose build .`<br />
+- `docker-compose build`<br />
 then you'll need to publish your image
 - `heroku container:push web <name of your heroku server>`<br />
 after publishin your image you can release it to heroku
